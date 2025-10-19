@@ -1,6 +1,6 @@
 spring:
   application:
-    name:scratch
+    name:Document Management system
   datasource:
     url: ${MYSQL_URL}
     username: ${USERNAME}
