@@ -1,0 +1,7 @@
+spring:
+  application:
+    name:scratch
+  datasource:
+    url: ${MYSQL_URL}
+    username: ${USERNAME}
+    password: ${PASSWORD}
