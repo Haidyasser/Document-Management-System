@@ -1,4 +1,4 @@
-package com.example.documentmanagementsystem;
+package com.dms.documentmanagementsystem;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
