@@ -1,13 +1,12 @@
 package com.dms.service;
 
-import com.dms.dto.LoginRequest;
-import com.dms.entity.User;
-import com.dms.exception.UserLoginException;
-import com.dms.exception.UserRegistrationException;
+import com.dms.dto.UserDTO;
+import com.dms.exception.BadRequestException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.RequestBody;
 
 public interface UserService {
-    String registerUser(User request) throws UserRegistrationException;
+    void registerUser(UserDTO request) throws BadRequestException;
 
-    String loginUser(@RequestBody LoginRequest request) throws UserLoginException;
+    String loginUser(@RequestBody UserDTO request) throws BadRequestException;
 }

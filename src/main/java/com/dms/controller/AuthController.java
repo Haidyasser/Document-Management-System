@@ -1,14 +1,14 @@
 package com.dms.controller;
 
-import com.dms.dto.LoginRequest;
-import com.dms.entity.User;
-import com.dms.exception.UserLoginException;
-import com.dms.exception.UserRegistrationException;
+import com.dms.dto.UserDTO;
+import com.dms.exception.BadRequestException;
 import com.dms.security.JwtUtil;
 import com.dms.service.UserService;
+import com.dms.validation.ValidationGroups;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -26,14 +26,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User request) throws UserRegistrationException {
+    public ResponseEntity<?> registerUser(@Validated(ValidationGroups.register.class) @RequestBody UserDTO request) throws BadRequestException {
         request.setId(UUID.randomUUID().toString());
         userService.registerUser(request);
         return ResponseEntity.ok("User registered successfully!");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@Validated @RequestBody LoginRequest request) throws UserLoginException {
+    public ResponseEntity<?> loginUser(@Validated(ValidationGroups.Login.class) @RequestBody UserDTO request) throws BadRequestException {
 
 //        if (userOpt.isEmpty()) {
 //            return ResponseEntity.status(401).body("Invalid credentials!");
