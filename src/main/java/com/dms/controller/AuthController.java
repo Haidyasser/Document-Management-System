@@ -5,6 +5,7 @@ import com.dms.exception.BadRequestException;
 import com.dms.security.JwtUtil;
 import com.dms.service.UserService;
 import com.dms.validation.ValidationGroups;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
@@ -26,8 +27,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Validated(ValidationGroups.register.class) @RequestBody UserDTO request) throws BadRequestException {
-        request.setId(UUID.randomUUID().toString());
+    public ResponseEntity<?> registerUser(@Validated(ValidationGroups.register.class) @RequestBody UserDTO request) throws BadRequestException, MethodArgumentNotValidException {
         userService.registerUser(request);
         return ResponseEntity.ok("User registered successfully!");
     }

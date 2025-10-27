@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.Console;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,12 +18,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleException(MethodArgumentNotValidException e, HttpServletRequest request) {
-
-        Map<String, String> validationError = new HashMap<>();
-        e.getBindingResult().getAllErrors().forEach((error) -> {
+        Map<String, String> validationErrors = new HashMap<>();
+         e.getBindingResult().getAllErrors().forEach((error) -> {
            String fieldName = ((FieldError)  error).getField();
            String errorMessage = error.getDefaultMessage();
-           validationError.put(fieldName, errorMessage);
+           validationErrors.put(fieldName, errorMessage);
         });
 
         ErrorResponse errorResponse = new ErrorResponse(
@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
                 "Input validation failed",
                 request.getRequestURI()
         );
-        errorResponse.setValidationErrors(validationError);
+        errorResponse.setValidationErrors(validationErrors);
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -47,5 +47,16 @@ public class GlobalExceptionHandler {
         );
         errorResponse.setValidationErrors(validationError);
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                e.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
