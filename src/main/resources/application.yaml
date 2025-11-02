@@ -16,8 +16,14 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
 
+  data:
+    mongodb:
+      uri: mongodb+srv://root:${PASSWORD}@cluster0.qxywym0.mongodb.net/dms=Cluster0
+
+
 server:
   port: 8080
+
 
 jwt:
   secret: ${JWT_SECRET}

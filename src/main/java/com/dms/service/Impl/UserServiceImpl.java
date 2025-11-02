@@ -1,10 +1,10 @@
 package com.dms.service.Impl;
 
 import com.dms.dto.UserDTO;
-import com.dms.entity.User;
+import com.dms.entity.mysql.User;
 import com.dms.exception.BadRequestException;
 import com.dms.mapper.UserMapper;
-import com.dms.repository.UserRepository;
+import com.dms.repository.mysql.UserRepository;
 import com.dms.security.JwtUtil;
 import com.dms.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,20 +14,19 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,  JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.jwtUtil = jwtUtil;
     }
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -58,7 +57,7 @@ public class UserServiceImpl implements UserService {
                 throw new BadRequestException("Invalid credentials!");
             }
 
-            return jwtUtil.generateToken(user.getEmail());
+            return jwtUtil.generateToken(user);
         }else{
             throw new BadRequestException("Invalid email or password!");
 

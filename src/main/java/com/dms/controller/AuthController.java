@@ -25,7 +25,6 @@ public class AuthController {
                           JwtUtil jwtUtil) {
         this.userService = userService;
     }
-
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Validated(ValidationGroups.register.class) @RequestBody UserDTO request) throws BadRequestException, MethodArgumentNotValidException {
         userService.registerUser(request);
@@ -34,16 +33,6 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@Validated(ValidationGroups.Login.class) @RequestBody UserDTO request) throws BadRequestException {
-
-//        if (userOpt.isEmpty()) {
-//            return ResponseEntity.status(401).body("Invalid credentials!");
-//        }
-//
-//        User user = userOpt.get();
-//        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-//            return ResponseEntity.status(401).body("Invalid credentials!");
-//        }
-
         var token = userService.loginUser(request);
         return ResponseEntity.ok(token);
     }

@@ -1,4 +1,4 @@
-package com.dms.entity;
+package com.dms.entity.mysql;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
