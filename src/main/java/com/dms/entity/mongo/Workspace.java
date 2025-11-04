@@ -3,6 +3,10 @@ package com.dms.entity.mongo;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 @Document(collection = "workspaces")
 public class Workspace {
     @Id
@@ -12,13 +16,22 @@ public class Workspace {
     private String type;
     private String access;
     private String nid;
+    private List<Folder> folders = new ArrayList<>();
+    private List<File> files = new ArrayList<>();
+    private Date createdAt;
 
-    public Workspace(String name, String description, String type, String access, String nid) {
+    public Workspace(String name, String description, String type, String access, String nid, List<Folder> folders, List<File> files) {
         this.name = name;
         this.description = description;
         this.type = type;
         this.access = access;
         this.nid = nid;
+        this.folders = folders;
+        this.files = files;
+        this.createdAt = new Date();
+    }
+    public Workspace() {
+        this.createdAt = new Date();
     }
 
     public String getId() {
@@ -63,6 +76,30 @@ public class Workspace {
 
     public String getNid() {
         return nid;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public List<File> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<File> files) {
+        this.files = files;
+    }
+
+    public List<Folder> getFolders() {
+        return folders;
+    }
+
+    public void setFolders(List<Folder> folders) {
+        this.folders = folders;
     }
 
     public void setNid(String nid) {
