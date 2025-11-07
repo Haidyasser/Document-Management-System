@@ -32,6 +32,36 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     }
 
     @Override
+    public Optional<Workspace> getWorkspaceById(String workspaceId) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
+        // Filter out deleted items
+        workspace.setFiles(workspace.getFiles().stream()
+                .filter(file -> !file.isDeleted())
+                .toList());
+
+        workspace.setFolders(workspace.getFolders().stream()
+                .filter(folder -> !folder.isDeleted())
+                .peek(this::filterDeletedItems)
+                .toList());
+
+        return Optional.of(workspace);
+    }
+
+    private void filterDeletedItems(Folder folder) {
+        folder.setFiles(folder.getFiles().stream()
+                .filter(file -> !file.isDeleted())
+                .toList());
+        folder.setFolders(folder.getFolders().stream()
+                .filter(sub -> !sub.isDeleted())
+                .peek(this::filterDeletedItems)
+                .toList());
+    }
+
+
+
+    @Override
     public List<Workspace> getUserWorkspaces(String nid) {
         return workspaceRepository.findByNid(nid);
     }
@@ -90,21 +120,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         return workspaceRepository.save(workspace);
     }
 
-    @Override
-    public Optional<Workspace> getWorkspaceById(String workspaceId) {
-        Workspace workspace = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new RuntimeException("Workspace not found"));
-        return Optional.ofNullable(workspace);
-    }
 
-    @Override
-    public Workspace deleteFile(String workspaceId, String fileId) {
-        Workspace workspace = workspaceRepository.findById(workspaceId).orElseThrow(
-                () -> new RuntimeException("Workspace not found")
-        );
-        workspace.getFiles().removeIf(file -> file.getId().equals(fileId));
-        return workspaceRepository.save(workspace);
-    }
 
     private boolean addSubFolderRecursive(List<Folder> folders, String parentFolderId, Folder subFolder) {
         for (Folder folder : folders) {
@@ -117,33 +133,73 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         return false;
     }
 
+
+
+    @Override
+    public Workspace deleteFile(String workspaceId, String fileId) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
+        // Try deleting from root
+        for (File file : workspace.getFiles()) {
+            if (file.getId().equals(fileId)) {
+                file.setDeleted(true);
+                return workspaceRepository.save(workspace);
+            }
+        }
+
+        // Try deleting inside folders recursively
+        boolean deleted = markFileAsDeleted(workspace.getFolders(), fileId);
+        if (!deleted) {
+            throw new RuntimeException("File not found");
+        }
+
+        return workspaceRepository.save(workspace);
+    }
+
+    private boolean markFileAsDeleted(List<Folder> folders, String fileId) {
+        if (folders == null) return false;
+        for (Folder folder : folders) {
+            // Check files inside this folder
+            for (File file : folder.getFiles()) {
+                if (file.getId().equals(fileId)) {
+                    file.setDeleted(true);
+                    return true;
+                }
+            }
+            // Go deeper
+            if (markFileAsDeleted(folder.getFolders(), fileId)) return true;
+        }
+        return false;
+    }
+
     @Override
     public Workspace deleteFolder(String workspaceId, String folderId) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
-        boolean deleted = deleteFolderRecursive(workspace.getFolders(), folderId);
-
-        if (!deleted)
+        boolean deleted = markFolderAsDeleted(workspace.getFolders(), folderId);
+        if (!deleted) {
             throw new RuntimeException("Folder not found");
+        }
 
         return workspaceRepository.save(workspace);
     }
 
-    private boolean deleteFolderRecursive(List<Folder> folders, String folderId) {
+    private boolean markFolderAsDeleted(List<Folder> folders, String folderId) {
         if (folders == null) return false;
 
-        // Try to remove folder at this level
-        boolean removed = folders.removeIf(folder -> folder.getId().equals(folderId));
-        if (removed) return true;
-
-        // Otherwise, go deeper
         for (Folder folder : folders) {
-            if (deleteFolderRecursive(folder.getFolders(), folderId)) return true;
+            if (folder.getId().equals(folderId)) {
+                folder.setDeleted(true);
+                return true;
+            }
+            if (markFolderAsDeleted(folder.getFolders(), folderId)) return true;
         }
 
         return false;
     }
+
 
     @Override
     public void deleteWorkspace(String workspaceId) {

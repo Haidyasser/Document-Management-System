@@ -15,12 +15,23 @@ public class Folder {
     private List<File> files = new ArrayList<>();
     private List<Folder> folders = new ArrayList<>();
     private Date createdAt;
+    private boolean deleted = false;
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
 
     public Folder(String name, List<Folder> subFolders, List<File> files) {
         this.name = name;
         this.folders = subFolders;
         this.files = files;
         this.createdAt = new Date();
+        this.deleted = false;
     }
     public Folder() {
         this.createdAt = new Date();
