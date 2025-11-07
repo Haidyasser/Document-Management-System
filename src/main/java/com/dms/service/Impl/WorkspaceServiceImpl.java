@@ -10,7 +10,6 @@ import com.dms.service.WorkspaceService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Observable;
 import java.util.Optional;
 
 @Service
@@ -146,6 +145,37 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         return false;
     }
 
+    @Override
+    public void deleteWorkspace(String workspaceId) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
+        // Delete all files and folders from their respective collections
+        deleteFilesRecursive(workspace.getFiles());
+        deleteFoldersRecursive(workspace.getFolders());
+
+        // Finally, delete the workspace itself
+        workspaceRepository.deleteById(workspaceId);
+    }
+
+    private void deleteFilesRecursive(List<File> files) {
+        if (files == null || files.isEmpty()) return;
+        for (File file : files) {
+            fileRepository.deleteById(file.getId());
+        }
+    }
+
+    private void deleteFoldersRecursive(List<Folder> folders) {
+        if (folders == null || folders.isEmpty()) return;
+        for (Folder folder : folders) {
+            // Delete all files inside this folder
+            deleteFilesRecursive(folder.getFiles());
+            // Recursively delete subfolders
+            deleteFoldersRecursive(folder.getFolders());
+            // Delete the folder itself
+            folderRepository.deleteById(folder.getId());
+        }
+    }
 
 
 }

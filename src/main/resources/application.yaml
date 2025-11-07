@@ -20,6 +20,11 @@ spring:
     mongodb:
       uri: mongodb+srv://root:${PASSWORD}@cluster0.qxywym0.mongodb.net/dms=Cluster0
 
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
 
 server:
   port: 8080

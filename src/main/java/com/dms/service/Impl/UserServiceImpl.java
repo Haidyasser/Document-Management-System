@@ -20,13 +20,11 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final JwtUtil jwtUtil;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,  JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
-        this.jwtUtil = jwtUtil;
     }
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -48,19 +46,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String loginUser(@RequestBody UserDTO request) throws BadRequestException {
-        Optional<User> userOpt = userRepository.findByEmail(request.getEmail().trim());
+    public User loginUser(@RequestBody UserDTO request) throws BadRequestException {
+        User user = userRepository.findByEmail(request.getEmail().trim()).orElseThrow(
+                () -> new BadRequestException("Invalid email or password!")
+        );
 
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())){
-                throw new BadRequestException("Invalid credentials!");
-            }
-
-            return jwtUtil.generateToken(user);
-        }else{
-            throw new BadRequestException("Invalid email or password!");
-
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())){
+            throw new BadRequestException("Invalid credentials!");
         }
+
+        return user;
     }
 }

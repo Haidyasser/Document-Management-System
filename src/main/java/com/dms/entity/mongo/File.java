@@ -12,12 +12,34 @@ public class File {
     private String name;
     private String type; // e.g. pdf, docx, png
     private String path; // file storage path or URL
+    private long size;
+    private String ownerId;
+    private boolean deleted = false;
     private Date createdAt;
 
-    public File(String name, String type, String path) {
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public File(String name, String type, String path, int size, String ownerId) {
         this.name = name;
         this.type = type;
         this.path = path;
+        this.size = size;
+        this.ownerId = ownerId;
+        this.deleted = false;
         this.createdAt = new Date();
     }
 
@@ -63,5 +85,13 @@ public class File {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
+    }
+
+    public long getSize() {
+        return size;
     }
 }

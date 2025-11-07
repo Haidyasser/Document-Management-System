@@ -24,4 +24,6 @@ public interface WorkspaceService {
     Workspace deleteFile(String workspaceId, String fileId);
 
     Workspace deleteFolder(String workspaceId, String folderId);
+
+    void deleteWorkspace(String workspaceId);
 }

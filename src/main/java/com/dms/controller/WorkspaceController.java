@@ -6,9 +6,15 @@ import com.dms.entity.mongo.Workspace;
 import com.dms.security.JwtUtil;
 import com.dms.service.WorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 @RestController
@@ -66,13 +72,42 @@ public class WorkspaceController {
 
     // ✅ Add file directly to workspace
     @PostMapping("/{workspaceId}/files")
-    public ResponseEntity<Workspace> addFile(
+    public ResponseEntity<?> addFile(
             @PathVariable String workspaceId,
-            @RequestBody File file
+            @RequestParam("file") MultipartFile file
     ) {
-        Workspace updated = workspaceService.addFile(workspaceId, file);
-        return ResponseEntity.ok(updated);
+        try {
+            // ✅ Create absolute uploads directory (if not exists)
+            String uploadDir = System.getProperty("user.dir") + "/uploads/";
+            java.io.File uploadDirFile = new java.io.File(uploadDir);
+            if (!uploadDirFile.exists()) {
+                boolean created = uploadDirFile.mkdirs();
+                System.out.println("Created uploads directory: " + created);
+            }
+
+            // ✅ Unique file name
+            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            java.io.File destinationFile = new java.io.File(uploadDir + filename);
+
+            // ✅ Save file
+            file.transferTo(destinationFile);
+
+            // ✅ Build file entity
+            File newFile = new File();
+            newFile.setName(file.getOriginalFilename());
+            newFile.setPath("/uploads/" + filename); // relative path for frontend
+            newFile.setType(file.getContentType());
+            newFile.setSize(file.getSize());
+
+            Workspace updated = workspaceService.addFile(workspaceId, newFile);
+            return ResponseEntity.ok(updated);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Upload failed: " + e.getMessage());
+        }
     }
+
 
     // ✅ Add file inside a specific folder
     @PostMapping("/{workspaceId}/folders/{folderId}/files")
@@ -110,5 +145,45 @@ public class WorkspaceController {
         Workspace updated = workspaceService.deleteFile(workspaceId, fileId);
         return ResponseEntity.ok(updated);
     }
+
+
+    @GetMapping("/{workspaceId}/files/{fileId}/download")
+    public ResponseEntity<?> downloadFile(
+            @PathVariable String workspaceId,
+            @PathVariable String fileId,
+            @RequestHeader("Authorization") String authHeader
+    ) throws FileNotFoundException {
+        String token = authHeader.substring(7);
+        String nid = jwtUtil.extractNid(token);
+
+        Workspace workspace = workspaceService.getWorkspaceById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
+        if (!workspace.getNid().equals(nid)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
+        }
+
+            // Find file by ID
+            com.dms.entity.mongo.File targetFile = workspace.getFiles().stream()
+                    .filter(f -> f.getId().equals(fileId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("File not found"));
+
+            // Build absolute path
+            java.io.File file = new java.io.File(System.getProperty("user.dir") + targetFile.getPath());
+            if (!file.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Prepare file stream
+            InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
+                    .contentType(MediaType.parseMediaType(targetFile.getType()))
+                    .contentLength(file.length())
+                    .body(resource);
+    }
+
 
 }

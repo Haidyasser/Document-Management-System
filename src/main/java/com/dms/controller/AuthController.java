@@ -1,6 +1,7 @@
 package com.dms.controller;
 
 import com.dms.dto.UserDTO;
+import com.dms.entity.mysql.User;
 import com.dms.exception.BadRequestException;
 import com.dms.security.JwtUtil;
 import com.dms.service.UserService;
@@ -12,6 +13,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -19,11 +22,13 @@ import java.util.UUID;
 public class AuthController {
     private final UserService userService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final JwtUtil jwtUtil;
 
 
     public AuthController(UserService userService,
                           JwtUtil jwtUtil) {
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Validated(ValidationGroups.register.class) @RequestBody UserDTO request) throws BadRequestException, MethodArgumentNotValidException {
@@ -33,7 +38,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@Validated(ValidationGroups.Login.class) @RequestBody UserDTO request) throws BadRequestException {
-        var token = userService.loginUser(request);
-        return ResponseEntity.ok(token);
+        User user = userService.loginUser(request);
+        String token = jwtUtil.generateToken(user);
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("user", Map.of(
+                "firstName", user.getFirstName(),
+                "lastName", user.getLastName(),
+                "email", user.getEmail()
+        ));
+        return ResponseEntity.ok(response);
     }
 }
