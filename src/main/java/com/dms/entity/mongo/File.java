@@ -10,19 +10,30 @@ public class File {
     @Id
     private String id;
     private String name;
-    private String type; // e.g. pdf, docx, png
-    private String path; // file storage path or URL
-    private long size;
-    private String ownerId;
+    private String type;
+    private String url;           // File path or cloud URL
+    private String workspaceId;   // Parent workspace or folder ID
+    private String nid;           // Owner (user ID)
     private boolean deleted = false;
     private Date createdAt;
+    private int size;
 
-    public String getOwnerId() {
-        return ownerId;
+    public File(String name, String type, String url, String workspaceId, String nid) {
+        this.name = name;
+        this.type = type;
+        this.url = url;
+        this.workspaceId = workspaceId;
+        this.nid = nid;
+        this.deleted = false;
+        this.createdAt = new Date();
     }
 
-    public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
     }
 
     public boolean isDeleted() {
@@ -33,15 +44,6 @@ public class File {
         this.deleted = deleted;
     }
 
-    public File(String name, String type, String path, int size, String ownerId) {
-        this.name = name;
-        this.type = type;
-        this.path = path;
-        this.size = size;
-        this.ownerId = ownerId;
-        this.deleted = false;
-        this.createdAt = new Date();
-    }
 
     public File() {
         this.createdAt = new Date();
@@ -71,13 +73,6 @@ public class File {
         this.type = type;
     }
 
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
 
     public Date getCreatedAt() {
         return createdAt;
@@ -87,11 +82,28 @@ public class File {
         this.createdAt = createdAt;
     }
 
-    public void setSize(long size) {
-        this.size = size;
+    public String getWorkspaceId() {
+        return workspaceId;
     }
 
-    public long getSize() {
-        return size;
+    public void setWorkspaceId(String workspaceId) {
+        this.workspaceId = workspaceId;
+
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getNid() {
+        return nid;
+    }
+
+    public void setNid(String nid) {
+        this.nid = nid;
     }
 }

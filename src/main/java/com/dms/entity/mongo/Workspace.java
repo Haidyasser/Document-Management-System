@@ -16,20 +16,37 @@ public class Workspace {
     private String type;
     private String access;
     private String nid;
-    private List<Folder> folders = new ArrayList<>();
-    private List<File> files = new ArrayList<>();
+    private String parentId;
+    private boolean deleted; // optional for soft delete
     private Date createdAt;
 
-    public Workspace(String name, String description, String type, String access, String nid, List<Folder> folders, List<File> files) {
+    public Workspace(String name, String description, String type, String access, String nid, String parentId) {
         this.name = name;
         this.description = description;
         this.type = type;
         this.access = access;
         this.nid = nid;
-        this.folders = folders;
-        this.files = files;
+        this.parentId = parentId;
+        this.deleted = false;
         this.createdAt = new Date();
     }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
     public Workspace() {
         this.createdAt = new Date();
     }
@@ -84,22 +101,6 @@ public class Workspace {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public List<File> getFiles() {
-        return files;
-    }
-
-    public void setFiles(List<File> files) {
-        this.files = files;
-    }
-
-    public List<Folder> getFolders() {
-        return folders;
-    }
-
-    public void setFolders(List<Folder> folders) {
-        this.folders = folders;
     }
 
     public void setNid(String nid) {
