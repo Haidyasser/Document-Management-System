@@ -17,6 +17,7 @@ public class File {
     private boolean deleted = false;
     private Date createdAt;
     private int size;
+    private Date deletedAt;
 
     public File(String name, String type, String url, String workspaceId, String nid) {
         this.name = name;
@@ -105,5 +106,13 @@ public class File {
 
     public void setNid(String nid) {
         this.nid = nid;
+    }
+
+    public Date getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Date deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

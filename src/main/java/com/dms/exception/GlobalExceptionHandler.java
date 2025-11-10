@@ -11,10 +11,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.io.Console;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.dms")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -66,5 +67,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body("File too large! Maximum upload size is 50MB.");
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<String> handleIOException(IOException exc) {
+        return ResponseEntity
+                .badRequest()
+                .body("File not found!");
     }
 }

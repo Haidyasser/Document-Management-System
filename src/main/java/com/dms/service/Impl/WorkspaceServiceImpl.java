@@ -8,6 +8,8 @@ import com.dms.repository.mongo.WorkspaceRepository;
 import com.dms.service.WorkspaceService;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -107,6 +109,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         List<File> files = fileRepository.findByWorkspaceIdAndDeletedFalse(workspaceId);
         for (File f : files) {
             f.setDeleted(true);
+            f.setDeletedAt(new Date());
             fileRepository.save(f);
         }
     }
@@ -117,6 +120,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         File file = fileRepository.findById(fileId)
                 .orElseThrow(() -> new RuntimeException("File not found"));
         file.setDeleted(true);
+        file.setDeletedAt(new Date());
         fileRepository.save(file);
     }
 }
