@@ -9,20 +9,56 @@ import java.util.Date;
 public class File {
     @Id
     private String id;
-    private String name;
-    private String type; // e.g. pdf, docx, png
-    private String path; // file storage path or URL
-    private long size;
-    private String ownerId;
-    private boolean deleted = false;
-    private Date createdAt;
+    private String storedName;
 
-    public String getOwnerId() {
-        return ownerId;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public File(String id, String storedName, String displayName, String type, String url, String workspaceId, String nid, int size, Date deletedAt) {
+        this.id = id;
+        this.storedName = storedName;
+        this.displayName = displayName;
+        this.type = type;
+        this.url = url;
+        this.workspaceId = workspaceId;
+        this.nid = nid;
+        this.deleted = false;
+        this.createdAt = new Date();
+        this.size = size;
+        this.deletedAt = deletedAt;
+    }
+
+    private String displayName;
+    private String type;
+    private String url;           // File path or cloud URL
+    private String workspaceId;   // Parent workspace or folder ID
+    private String nid;           // Owner (user ID)
+    private boolean deleted = false;
+    private Date createdAt;
+    private int size;
+    private Date deletedAt;
+
+    public File(String storedName, String type, String url, String workspaceId, String nid) {
+        this.storedName = storedName;
+        this.type = type;
+        this.url = url;
+        this.workspaceId = workspaceId;
+        this.nid = nid;
+        this.deleted = false;
+        this.createdAt = new Date();
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
     }
 
     public boolean isDeleted() {
@@ -33,15 +69,6 @@ public class File {
         this.deleted = deleted;
     }
 
-    public File(String name, String type, String path, int size, String ownerId) {
-        this.name = name;
-        this.type = type;
-        this.path = path;
-        this.size = size;
-        this.ownerId = ownerId;
-        this.deleted = false;
-        this.createdAt = new Date();
-    }
 
     public File() {
         this.createdAt = new Date();
@@ -55,12 +82,12 @@ public class File {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getStoredName() {
+        return storedName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setStoredName(String storedName) {
+        this.storedName = storedName;
     }
 
     public String getType() {
@@ -71,13 +98,6 @@ public class File {
         this.type = type;
     }
 
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
 
     public Date getCreatedAt() {
         return createdAt;
@@ -87,11 +107,36 @@ public class File {
         this.createdAt = createdAt;
     }
 
-    public void setSize(long size) {
-        this.size = size;
+    public String getWorkspaceId() {
+        return workspaceId;
     }
 
-    public long getSize() {
-        return size;
+    public void setWorkspaceId(String workspaceId) {
+        this.workspaceId = workspaceId;
+
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getNid() {
+        return nid;
+    }
+
+    public void setNid(String nid) {
+        this.nid = nid;
+    }
+
+    public Date getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Date deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

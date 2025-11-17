@@ -21,7 +21,6 @@ import java.util.UUID;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final UserService userService;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final JwtUtil jwtUtil;
 
 
@@ -45,7 +44,8 @@ public class AuthController {
         response.put("user", Map.of(
                 "firstName", user.getFirstName(),
                 "lastName", user.getLastName(),
-                "email", user.getEmail()
+                "email", user.getEmail(),
+                "nid", user.getNationalId()
         ));
         return ResponseEntity.ok(response);
     }

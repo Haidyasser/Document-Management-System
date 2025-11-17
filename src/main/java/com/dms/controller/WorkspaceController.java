@@ -1,7 +1,7 @@
 package com.dms.controller;
 
+import com.dms.dto.WorkspaceTreeDTO;
 import com.dms.entity.mongo.File;
-import com.dms.entity.mongo.Folder;
 import com.dms.entity.mongo.Workspace;
 import com.dms.security.JwtUtil;
 import com.dms.service.WorkspaceService;
@@ -15,12 +15,20 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/workspaces")
 public class WorkspaceController {
+
     private final WorkspaceService workspaceService;
     private final JwtUtil jwtUtil;
 
@@ -30,129 +38,148 @@ public class WorkspaceController {
         this.jwtUtil = jwtUtil;
     }
 
+    // ✅ Create workspace or subfolder
     @PostMapping
-    public ResponseEntity<Workspace> addWorkspace(@RequestBody Workspace workspace, @RequestHeader("Authorization") String authHeader) {
-        // Extract JWT
-        String token = authHeader.substring(7); // remove "Bearer "
-        String nid = jwtUtil.extractNid(token); // custom method in your JwtUtil
-
-        Workspace saved = workspaceService.createWorkspace(workspace, nid);
-        return ResponseEntity.ok().body(saved);
-    }
-
-    @GetMapping
-    public ResponseEntity<List<Workspace>> getAllWorkspaces(@RequestHeader("Authorization")  String authHeader) {
-        // Extract JWT
-        String token = authHeader.substring(7); // remove "Bearer "
-        String nid = jwtUtil.extractNid(token); // custom method in your JwtUtil
-
-        List<Workspace> found = workspaceService.getUserWorkspaces(nid);
-        return ResponseEntity.ok().body(found);
-    }
-
-    @PostMapping("/{workspaceId}/folders")
-    public ResponseEntity<Workspace> addFolder(
-            @PathVariable String workspaceId,
-            @RequestBody Folder folder
+    public ResponseEntity<Workspace> createWorkspace(
+            @RequestBody Workspace workspace,
+            @RequestHeader("Authorization") String authHeader
     ) {
-        Workspace updated = workspaceService.addFolder(workspaceId, folder);
-        return ResponseEntity.ok(updated);
+        String token = authHeader.substring(7);
+        String nid = jwtUtil.extractNid(token);
+        System.out.println("token: " + token);
+        workspace.setNid(nid);
+        Workspace saved = workspaceService.createWorkspace(workspace);
+        System.out.println("saved: " + saved);
+        return ResponseEntity.ok(saved);
     }
 
-    // ✅ Add subfolder inside another folder
-    @PostMapping("/{workspaceId}/folders/{parentFolderId}")
-    public ResponseEntity<Workspace> addSubFolder(
-            @PathVariable String workspaceId,
-            @PathVariable String parentFolderId,
-            @RequestBody Folder subFolder
+    // ✅ Get all user's root workspaces (no parent)
+    @GetMapping("/root")
+    public ResponseEntity<List<Workspace>> getRootWorkspaces(
+            @RequestHeader("Authorization") String authHeader
     ) {
-        Workspace updated = workspaceService.addSubFolder(workspaceId, parentFolderId, subFolder);
-        return ResponseEntity.ok(updated);
-    }
+        String token = authHeader.substring(7);
+        String nid = jwtUtil.extractNid(token);
 
-    // ✅ Add file directly to workspace
-    @PostMapping("/{workspaceId}/files")
-    public ResponseEntity<?> addFile(
-            @PathVariable String workspaceId,
-            @RequestParam("file") MultipartFile file
-    ) {
-        try {
-            // ✅ Create absolute uploads directory (if not exists)
-            String uploadDir = System.getProperty("user.dir") + "/uploads/";
-            java.io.File uploadDirFile = new java.io.File(uploadDir);
-            if (!uploadDirFile.exists()) {
-                boolean created = uploadDirFile.mkdirs();
-                System.out.println("Created uploads directory: " + created);
-            }
-
-            // ✅ Unique file name
-            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            java.io.File destinationFile = new java.io.File(uploadDir + filename);
-
-            // ✅ Save file
-            file.transferTo(destinationFile);
-
-            // ✅ Build file entity
-            File newFile = new File();
-            newFile.setName(file.getOriginalFilename());
-            newFile.setPath("/uploads/" + filename); // relative path for frontend
-            newFile.setType(file.getContentType());
-            newFile.setSize(file.getSize());
-
-            Workspace updated = workspaceService.addFile(workspaceId, newFile);
-            return ResponseEntity.ok(updated);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Upload failed: " + e.getMessage());
-        }
-    }
-
-
-    // ✅ Add file inside a specific folder
-    @PostMapping("/{workspaceId}/folders/{folderId}/files")
-    public ResponseEntity<Workspace> addFileToFolder(
-            @PathVariable String workspaceId,
-            @PathVariable String folderId,
-            @RequestBody File file
-    ) {
-        Workspace updated = workspaceService.addFileToFolder(workspaceId, folderId, file);
-        return ResponseEntity.ok(updated);
-    }
-
-    @GetMapping("/{workspaceId}")
-    public ResponseEntity<Workspace> getWorkspaceById(@PathVariable String workspaceId) {
-        Workspace found = workspaceService.getWorkspaceById(workspaceId).orElseThrow();
+        List<Workspace> found = workspaceService.getRootWorkspaces(nid);
         return ResponseEntity.ok(found);
     }
 
-    // ✅ Delete folder
-    @DeleteMapping("/{workspaceId}/folders/{folderId}")
-    public ResponseEntity<Workspace> deleteFolder(
-            @PathVariable String workspaceId,
-            @PathVariable String folderId
-    ) {
-        Workspace updated = workspaceService.deleteFolder(workspaceId, folderId);
-        return ResponseEntity.ok(updated);
+    // ✅ Get subfolders of a workspace (children)
+    @GetMapping("/{parentId}/children")
+    public ResponseEntity<List<Workspace>> getSubfolders(@PathVariable String parentId) {
+        List<Workspace> children = workspaceService.getSubfolders(parentId);
+        return ResponseEntity.ok(children);
     }
 
-    // ✅ Delete file
-    @DeleteMapping("/{workspaceId}/files/{fileId}")
-    public ResponseEntity<Workspace> deleteFile(
-            @PathVariable String workspaceId,
-            @PathVariable String fileId
-    ) {
-        Workspace updated = workspaceService.deleteFile(workspaceId, fileId);
-        return ResponseEntity.ok(updated);
+    // ✅ Get a single workspace by ID
+    @GetMapping("/{workspaceId}")
+    public ResponseEntity<Workspace> getWorkspaceById(@PathVariable String workspaceId) {
+        Workspace found = workspaceService.getWorkspaceById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+        return ResponseEntity.ok(found);
     }
 
+    // ✅ Upload file to workspace or subfolder
+    @PostMapping("/{workspaceId}/files")
+    public ResponseEntity<?> uploadFile(
+            @PathVariable String workspaceId,
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader("Authorization") String authHeader
+    ) throws IOException {
+        // Create upload directory
+        String uploadDir = System.getProperty("user.dir") + "/uploads/";
+        java.io.File uploadDirFile = new java.io.File(uploadDir);
+        if (!uploadDirFile.exists()) uploadDirFile.mkdirs();
 
+        String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        java.io.File destinationFile = new java.io.File(uploadDir + filename);
+        file.transferTo(destinationFile);
+
+        // Build file entity
+        File newFile = new File();
+        newFile.setUrl("/uploads/" + filename);
+        newFile.setStoredName(filename);
+        newFile.setDisplayName(file.getOriginalFilename());
+        newFile.setType(file.getContentType());
+        newFile.setSize((int) file.getSize());
+        newFile.setWorkspaceId(workspaceId);
+        //extract nid from token
+        String token = authHeader.substring(7);
+        String nid = jwtUtil.extractNid(token);
+        newFile.setNid(nid);
+
+        workspaceService.addFile(newFile);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "File uploaded successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    // ✅ Download file
     @GetMapping("/{workspaceId}/files/{fileId}/download")
     public ResponseEntity<?> downloadFile(
             @PathVariable String workspaceId,
             @PathVariable String fileId,
             @RequestHeader("Authorization") String authHeader
     ) throws FileNotFoundException {
+        String token = authHeader.substring(7);
+        String nid = jwtUtil.extractNid(token);
+
+        // Check workspace access
+        Workspace workspace = workspaceService.getWorkspaceById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
+        if (!workspace.getNid().equals(nid)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
+        }
+
+        File targetFile = workspaceService.getFileById(fileId)
+                .orElseThrow(() -> new RuntimeException("File not found"));
+
+        java.io.File file = new java.io.File(System.getProperty("user.dir") + targetFile.getUrl());
+        if (!file.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+        System.out.println("file: " + file.getAbsolutePath());
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=" + targetFile.getStoredName())
+                .contentType(MediaType.parseMediaType(targetFile.getType()))
+                .contentLength(file.length())
+                .body(resource);
+    }
+
+    // Soft delete workspace (folder)
+    @DeleteMapping("/{workspaceId}")
+    public ResponseEntity<?> softDeleteWorkspace(@PathVariable String workspaceId) {
+        workspaceService.softDeleteWorkspace(workspaceId);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Workspace marked as deleted");
+        return ResponseEntity.ok(response);
+    }
+
+    // Soft delete file
+    @DeleteMapping("/files/{fileId}")
+    public ResponseEntity<?> softDeleteFile(@PathVariable String fileId) {
+        workspaceService.softDeleteFile(fileId);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "File marked as deleted");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{workspaceId}/tree")
+    public ResponseEntity<WorkspaceTreeDTO> getWorkspaceTree(@PathVariable String workspaceId) {
+        WorkspaceTreeDTO tree = workspaceService.getWorkspaceTree(workspaceId);
+        return ResponseEntity.ok(tree);
+    }
+
+    @GetMapping("/{workspaceId}/files/{fileId}/preview")
+    public ResponseEntity<?> previewFile(
+            @PathVariable String workspaceId,
+            @PathVariable String fileId,
+            @RequestHeader("Authorization") String authHeader
+    ) throws IOException {
         String token = authHeader.substring(7);
         String nid = jwtUtil.extractNid(token);
 
@@ -163,26 +190,51 @@ public class WorkspaceController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
         }
 
-            // Find file by ID
-            com.dms.entity.mongo.File targetFile = workspace.getFiles().stream()
-                    .filter(f -> f.getId().equals(fileId))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("File not found"));
+        File fileEntity = workspaceService.getFileById(fileId)
+                .orElseThrow(() -> new RuntimeException("File not found"));
 
-            // Build absolute path
-            java.io.File file = new java.io.File(System.getProperty("user.dir") + targetFile.getPath());
-            if (!file.exists()) {
-                return ResponseEntity.notFound().build();
-            }
+        // FIXED PATH HANDLING
+        Path filePath = Paths.get(System.getProperty("user.dir"), "uploads", fileEntity.getStoredName());
 
-            // Prepare file stream
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+        if (!Files.exists(filePath)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File not found on server");
+        }
 
-            return ResponseEntity.ok()
-                    .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
-                    .contentType(MediaType.parseMediaType(targetFile.getType()))
-                    .contentLength(file.length())
-                    .body(resource);
+        byte[] fileBytes = Files.readAllBytes(filePath);
+        String base64Data = Base64.getEncoder().encodeToString(fileBytes);
+
+        return ResponseEntity.ok(new HashMap<>() {{
+            put("fileName", fileEntity.getDisplayName());
+            put("type", fileEntity.getType());
+            put("base64", base64Data);
+        }});
+    }
+
+
+
+    @PutMapping("/{workspaceId}")
+    public ResponseEntity<?> updateWorkspace(
+            @PathVariable String workspaceId,
+            @RequestBody Workspace workspaceUpdates,
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        String token = authHeader.substring(7);
+        String nid = jwtUtil.extractNid(token);
+
+        Workspace existing = workspaceService.getWorkspaceById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
+        if (!existing.getNid().equals(nid)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
+        }
+
+        // apply allowed updates (example: name, parentId, description)
+        if (workspaceUpdates.getName() != null) existing.setName(workspaceUpdates.getName());
+        if (workspaceUpdates.getParentId() != null) existing.setParentId(workspaceUpdates.getParentId());
+        if (workspaceUpdates.getDescription() != null) existing.setDescription(workspaceUpdates.getDescription());
+
+        Workspace saved = workspaceService.updateWorkspace(existing);
+        return ResponseEntity.ok(saved);
     }
 
 
