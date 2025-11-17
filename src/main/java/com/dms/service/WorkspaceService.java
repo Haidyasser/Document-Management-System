@@ -19,4 +19,5 @@ public interface WorkspaceService {
     Optional<File> getFileById(String fileId);
     void softDeleteWorkspace(String workspaceId);
     void softDeleteFile(String fileId);
+    Workspace updateWorkspace(Workspace workspace);
 }

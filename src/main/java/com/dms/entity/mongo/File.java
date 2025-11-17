@@ -9,7 +9,31 @@ import java.util.Date;
 public class File {
     @Id
     private String id;
-    private String name;
+    private String storedName;
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public File(String id, String storedName, String displayName, String type, String url, String workspaceId, String nid, int size, Date deletedAt) {
+        this.id = id;
+        this.storedName = storedName;
+        this.displayName = displayName;
+        this.type = type;
+        this.url = url;
+        this.workspaceId = workspaceId;
+        this.nid = nid;
+        this.deleted = false;
+        this.createdAt = new Date();
+        this.size = size;
+        this.deletedAt = deletedAt;
+    }
+
+    private String displayName;
     private String type;
     private String url;           // File path or cloud URL
     private String workspaceId;   // Parent workspace or folder ID
@@ -19,8 +43,8 @@ public class File {
     private int size;
     private Date deletedAt;
 
-    public File(String name, String type, String url, String workspaceId, String nid) {
-        this.name = name;
+    public File(String storedName, String type, String url, String workspaceId, String nid) {
+        this.storedName = storedName;
         this.type = type;
         this.url = url;
         this.workspaceId = workspaceId;
@@ -58,12 +82,12 @@ public class File {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getStoredName() {
+        return storedName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setStoredName(String storedName) {
+        this.storedName = storedName;
     }
 
     public String getType() {

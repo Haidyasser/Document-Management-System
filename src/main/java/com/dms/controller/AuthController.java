@@ -21,7 +21,6 @@ import java.util.UUID;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final UserService userService;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final JwtUtil jwtUtil;
 
 

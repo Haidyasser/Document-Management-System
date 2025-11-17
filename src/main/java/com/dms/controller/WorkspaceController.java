@@ -16,6 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,8 +98,9 @@ public class WorkspaceController {
 
         // Build file entity
         File newFile = new File();
-        newFile.setName(file.getOriginalFilename());
         newFile.setUrl("/uploads/" + filename);
+        newFile.setStoredName(filename);
+        newFile.setDisplayName(file.getOriginalFilename());
         newFile.setType(file.getContentType());
         newFile.setSize((int) file.getSize());
         newFile.setWorkspaceId(workspaceId);
@@ -139,13 +144,13 @@ public class WorkspaceController {
         InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
         System.out.println("file: " + file.getAbsolutePath());
         return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=" + targetFile.getName())
+                .header("Content-Disposition", "attachment; filename=" + targetFile.getStoredName())
                 .contentType(MediaType.parseMediaType(targetFile.getType()))
                 .contentLength(file.length())
                 .body(resource);
     }
 
-    // ✅ Soft delete workspace (folder)
+    // Soft delete workspace (folder)
     @DeleteMapping("/{workspaceId}")
     public ResponseEntity<?> softDeleteWorkspace(@PathVariable String workspaceId) {
         workspaceService.softDeleteWorkspace(workspaceId);
@@ -154,7 +159,7 @@ public class WorkspaceController {
         return ResponseEntity.ok(response);
     }
 
-    // ✅ Soft delete file
+    // Soft delete file
     @DeleteMapping("/files/{fileId}")
     public ResponseEntity<?> softDeleteFile(@PathVariable String fileId) {
         workspaceService.softDeleteFile(fileId);
@@ -178,32 +183,59 @@ public class WorkspaceController {
         String token = authHeader.substring(7);
         String nid = jwtUtil.extractNid(token);
 
-        // 1️⃣ Verify workspace ownership
         Workspace workspace = workspaceService.getWorkspaceById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
         if (!workspace.getNid().equals(nid)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
         }
 
-        // 2️⃣ Get file info
         File fileEntity = workspaceService.getFileById(fileId)
                 .orElseThrow(() -> new RuntimeException("File not found"));
 
-        java.io.File file = new java.io.File(System.getProperty("user.dir") + fileEntity.getUrl());
-        if (!file.exists()) {
+        // FIXED PATH HANDLING
+        Path filePath = Paths.get(System.getProperty("user.dir"), "uploads", fileEntity.getStoredName());
+
+        if (!Files.exists(filePath)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File not found on server");
         }
 
-        // 3️⃣ Read bytes and encode as Base64
-        byte[] fileBytes = java.nio.file.Files.readAllBytes(file.toPath());
-        String base64Data = java.util.Base64.getEncoder().encodeToString(fileBytes);
+        byte[] fileBytes = Files.readAllBytes(filePath);
+        String base64Data = Base64.getEncoder().encodeToString(fileBytes);
 
-        // 4️⃣ Return response
-        return ResponseEntity.ok(new java.util.HashMap<>() {{
-            put("fileName", fileEntity.getName());
+        return ResponseEntity.ok(new HashMap<>() {{
+            put("fileName", fileEntity.getDisplayName());
             put("type", fileEntity.getType());
             put("base64", base64Data);
         }});
     }
+
+
+
+    @PutMapping("/{workspaceId}")
+    public ResponseEntity<?> updateWorkspace(
+            @PathVariable String workspaceId,
+            @RequestBody Workspace workspaceUpdates,
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        String token = authHeader.substring(7);
+        String nid = jwtUtil.extractNid(token);
+
+        Workspace existing = workspaceService.getWorkspaceById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
+        if (!existing.getNid().equals(nid)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
+        }
+
+        // apply allowed updates (example: name, parentId, description)
+        if (workspaceUpdates.getName() != null) existing.setName(workspaceUpdates.getName());
+        if (workspaceUpdates.getParentId() != null) existing.setParentId(workspaceUpdates.getParentId());
+        if (workspaceUpdates.getDescription() != null) existing.setDescription(workspaceUpdates.getDescription());
+
+        Workspace saved = workspaceService.updateWorkspace(existing);
+        return ResponseEntity.ok(saved);
+    }
+
 
 }

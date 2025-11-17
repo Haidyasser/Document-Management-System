@@ -123,4 +123,12 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         file.setDeletedAt(new Date());
         fileRepository.save(file);
     }
+
+    // Java
+    @Override
+    public Workspace updateWorkspace(Workspace workspace) {
+        // assuming you have a repository like workspaceRepository
+        return workspaceRepository.save(workspace);
+    }
+
 }
