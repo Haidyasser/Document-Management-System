@@ -10,6 +10,15 @@ public class File {
     @Id
     private String id;
     private String storedName;
+    private String displayName;
+    private String type;
+    private String url;           // File path or cloud URL
+    private String workspaceId;   // Parent workspace or folder ID
+    private String nid;           // Owner (user NID)
+    private boolean deleted = false;
+    private Date createdAt;
+    private int size;
+    private Date deletedAt;
 
     public String getDisplayName() {
         return displayName;
@@ -33,15 +42,6 @@ public class File {
         this.deletedAt = deletedAt;
     }
 
-    private String displayName;
-    private String type;
-    private String url;           // File path or cloud URL
-    private String workspaceId;   // Parent workspace or folder ID
-    private String nid;           // Owner (user ID)
-    private boolean deleted = false;
-    private Date createdAt;
-    private int size;
-    private Date deletedAt;
 
     public File(String storedName, String type, String url, String workspaceId, String nid) {
         this.storedName = storedName;
