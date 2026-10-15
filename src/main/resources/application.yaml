@@ -3,9 +3,9 @@ spring:
     name: Document Management System
 
   datasource:
-    url: ${MYSQL_URL}
-    username: ${USERNAME}
-    password: ${PASSWORD}
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/dms_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:haidy}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -18,7 +18,7 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb+srv://root:${PASSWORD}@cluster0.qxywym0.mongodb.net/dms=Cluster0
+      uri: mongodb+srv://root:haidy@cluster0.a4w6mlg.mongodb.net/dms=Cluster0
 
   servlet:
     multipart:
@@ -31,5 +31,5 @@ server:
 
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:myDefaultSecretKeyThatIsAtLeast256BitsLongForHS256Algorithm}
   expiration: 86400000
