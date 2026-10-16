@@ -12,9 +12,15 @@ import java.util.Map;
 
 @Component
 public class JwtUtil {
-    @Value("${jwt.secret}")
-    private String SECRET; // must be at least 32 chars
-    private final long EXPIRATION_TIME = 86400000; // 1 day in milliseconds
+    private final String SECRET;
+    private final long EXPIRATION_TIME;
+
+    public JwtUtil(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration}") long expirationTime
+    ) {
+        this.SECRET = secret;
+        this.EXPIRATION_TIME = expirationTime;
 
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
