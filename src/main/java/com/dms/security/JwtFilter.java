@@ -40,11 +40,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
                 if (jwtUtil.validateToken(token)
                         && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    String email = jwtUtil.extractEmail(token);
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(email, null, List.of());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    String id = jwtUtil.extractId(token);
+
+                    if (id != null) {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(id, null, List.of());
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
             }
         } catch (JwtException | IllegalArgumentException e) {

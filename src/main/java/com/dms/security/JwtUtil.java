@@ -29,8 +29,6 @@ public class JwtUtil {
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", user.getId());
-        claims.put("email", user.getEmail());
-        claims.put("nid", user.getNationalId());
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(user.getEmail())
@@ -40,13 +38,13 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String extractNid(String token) {
+    public String extractId(String token) {
         Claims claims = extractAllClaims(token);
-        return claims.get("nid", String.class);
+        return claims.get("id", String.class);
     }
 
     public String extractEmail(String token) {
-        return extractAllClaims(token).get("email", String.class);
+        return extractAllClaims(token).getSubject();
     }
 
     private Claims extractAllClaims(String token) {
