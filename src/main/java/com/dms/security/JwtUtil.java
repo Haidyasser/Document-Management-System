@@ -21,7 +21,7 @@ public class JwtUtil {
     ) {
         this.SECRET = secret;
         this.EXPIRATION_TIME = expirationTime;
-
+    }
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
