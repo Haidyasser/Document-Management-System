@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://localhost:3306/dms_db}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:haidy}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -18,7 +18,7 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb+srv://root:haidy@cluster0.a4w6mlg.mongodb.net/dms=Cluster0
+      uri: mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@cluster0.a4w6mlg.mongodb.net/dms=Cluster0
 
   servlet:
     multipart:
@@ -31,5 +31,5 @@ server:
 
 
 jwt:
-  secret: ${JWT_SECRET:myDefaultSecretKeyThatIsAtLeast256BitsLongForHS256Algorithm}
+  secret: ${JWT_SECRET}
   expiration: 86400000
